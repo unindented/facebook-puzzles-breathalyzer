@@ -75,22 +75,37 @@ public final class Levenshtein
       return 0;
     }
 
-    int mindist = word.length();
+    // start with words of the same length, and move outwards
+    final int length = word.length();
+    int offset = -1;
 
-    for (final String dword : dict)
+    int mindist = Integer.MAX_VALUE;
+
+    do
     {
-      final int dist = distance(word, dword);
-      if (dist < mindist)
+      for (final String dword : dict.getWordsOfLength(length, ++offset))
       {
-        mindist = dist;
-
-        // if the minimum distance == 0, there is no way to improve it
-        if (mindist == 0)
+        final int dist = distance(word, dword);
+        if (dist < mindist)
         {
-          break;
+          mindist = dist;
+
+          // if the minimum distance == 0, there is no way to improve it
+          if (mindist <= offset)
+          {
+            break;
+          }
         }
       }
+
+      // if the minimum distance <= 1, we are not going to improve it by looking
+      // at the words in the other buckets
+      if (mindist <= offset + 1)
+      {
+        break;
+      }
     }
+    while (true);
 
     return mindist;
   }
