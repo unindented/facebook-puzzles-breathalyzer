@@ -27,6 +27,6 @@ public class breathalyzer
 
     // and output the sum of the minimum distances between the words in the
     // sentence and the words in the dictionary
-    System.out.println(Levenshtein.distanceSentence(line, dict));
+    System.out.println(Levenshtein.getInstance().distanceSentence(line, dict));
   }
 }
