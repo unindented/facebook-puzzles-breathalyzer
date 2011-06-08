@@ -1,0 +1,21 @@
+<project default="dist" basedir=".">
+  <property name="keyword" value="breathalyzer" />
+
+  <target name="compile">
+    <javac srcdir="." destdir="." source="1.5" target="1.5" includeantruntime="false" />
+  </target>
+
+  <target name="dist" depends="compile">
+    <echo message="#!/bin/bash&#x0A;&#x0A;java -cp &quot;${0%/*}&quot; -Xmx1024M ${keyword} &quot;$@&quot;&#x0A;" file="${keyword}" />
+    <chmod file="${keyword}" perm="a+x" />
+  </target>
+
+  <target name="clean">
+    <delete>
+      <fileset dir="." includes="**/*.class" />
+    </delete>
+    <delete file="${keyword}" />
+  </target>
+
+  <target name="rebuild" depends="clean,dist" />
+</project>
