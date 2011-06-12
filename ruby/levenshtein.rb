@@ -1,7 +1,9 @@
+##
 # Utility class to calculate Levenshtein distances.
 #
 class Levenshtein
 
+  ##
   # Calculates the Levenshtein distance between two words.
   #
   def self.distance(s, t)
@@ -38,6 +40,7 @@ class Levenshtein
     return d[m][n]
   end
 
+  ##
   # Calculates the minimum Levenshtein distance between a word and all the
   # words in a dictionary.
   #
@@ -45,21 +48,34 @@ class Levenshtein
     # if the dictionary contains the word, there is no need to go any further
     return 0 if dict.include?(word)
 
-    mindist = word.length
+    # start with words of the same length, and move outwards
+    length = word.length
+    offset = -1
 
-    dict.each do |dword|
-      dist = distance(word, dword)
-      if dist < mindist
-        mindist = dist
+    mindist = 2**31 - 1
 
-        # if the minimum distance == 0, there is no way to improve it
-        break if mindist == 0
+    loop do
+      offset += 1
+
+      dict.words_of_length_offset(length, offset).each do |dword|
+        dist = distance(word, dword)
+        if dist < mindist
+          mindist = dist
+
+          # if the minimum distance == 0, there is no way to improve it
+          break if mindist <= offset
+        end
       end
+
+      # if the minimum distance <= 1, we are not going to improve it by looking
+      # at the words in the other buckets
+      break if mindist <= offset + 1
     end
 
     return mindist
   end
 
+  ##
   # Calculates the sum of the minimum Levenshtein distances between the words
   # in a sentence and the words in a dictionary.
   #
