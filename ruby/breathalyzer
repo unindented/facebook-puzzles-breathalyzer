@@ -1,0 +1,26 @@
+#!/usr/bin/ruby
+
+def usage
+  puts "Usage: #{$0} <file>"
+  exit 1
+end
+
+usage if ARGV.length != 1
+
+
+require './dictionary.rb'
+require './levenshtein.rb'
+
+DICTIONARY_PATH = '../twl06.txt'
+
+# load the dictionary
+dict = Dictionary.load(DICTIONARY_PATH)
+
+# read the sentence from the given file
+line = File.read(ARGV[0])
+line.strip!
+line.upcase!
+
+# and output the sum of the minimum distances between the words in the
+# sentence and the words in the dictionary
+puts Levenshtein.distance_sentence(line, dict)
