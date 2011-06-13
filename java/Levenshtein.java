@@ -3,58 +3,6 @@
  */
 public final class Levenshtein
 {
-  /** Default rows and columns for the distance matrix. */
-  private static final int DEFAULT_SIZE = 16;
-
-  /** Rows in the distance matrix. */
-  private int rows;
-  /** Columns in the distance matrix. */
-  private int cols;
-  /** Reusable distance matrix. */
-  private int[][] d;
-
-  /**
-   * Constructs an instance with a distance matrix of the default size.
-   */
-  private Levenshtein()
-  {
-    this(DEFAULT_SIZE, DEFAULT_SIZE);
-  }
-
-  /**
-   * Constructs an instance with a distance matrix of the specified rows and
-   * columns.
-   *
-   * @param rows Rows.
-   * @param cols Columns
-   */
-  private Levenshtein(final int rows, final int cols)
-  {
-    this.d = getDistanceMatrix(rows, cols);
-  }
-
-  /**
-   * Returns a matrix with at least the specified rows and columns.
-   *
-   * <p>
-   * It tries to reuse the existing matrix, to minimize allocations.
-   * </p>
-   *
-   * @param rows Minimum rows.
-   * @param cols Minimum columns.
-   * @return Matrix with at least the specified rows and columns.
-   */
-  private int[][] getDistanceMatrix(final int rows, final int cols)
-  {
-    if (this.rows < rows || this.cols < cols)
-    {
-      this.rows = Math.max(this.rows, rows);
-      this.cols = Math.max(this.cols, cols);
-      this.d = new int[this.rows][this.cols];
-    }
-    return d;
-  }
-
   /**
    * Calculates the Levenshtein distance between two words.
    *
@@ -62,49 +10,45 @@ public final class Levenshtein
    * @param t Some other word.
    * @return Levenshtein between them.
    */
-  public int distance(final String s, final String t)
+  public static int distance(final String s, final String t)
   {
-    if (s.equals(t))
-    {
-      return 0;
-    }
-
     final int m = s.length();
     final int n = t.length();
 
-    // d[i][j] will hold the levenshtein distance between the first i chars
-    // of s and the first j chars of t
-    final int[][] d = getDistanceMatrix(m + 1, n + 1);
-
-    for (int i = 0; i <= m; i++)
+    if (n == 0)
     {
-      d[i][0] = i; // the distance of any first string to an empty second string
+      return m;
     }
-    for (int j = 0; j <= n; j++)
+    if (m == 0)
     {
-      d[0][j] = j; // the distance of any second string to an empty first string
+      return n;
     }
 
-    for (int j = 1; j <= n; j++)
+    final int[] d = new int[n + 1];
+    for (int k = 0; k < d.length; k++)
     {
-      for (int i = 1; i <= m; i++)
+      d[k] = k;
+    }
+    int x = -1;
+
+    for (int i = 0; i < m; i++)
+    {
+      int e = i + 1;
+      for (int j = 0; j < n; j++)
       {
-        if (s.charAt(i - 1) == t.charAt(j - 1))
-        {
-          d[i][j] = d[i - 1][j - 1]; // no operation required
-        }
-        else
-        {
-          d[i][j] = Math.min(Math.min(
-            d[i - 1][j    ] + 1,  // a deletion
-            d[i    ][j - 1] + 1), // an insertion
-            d[i - 1][j - 1] + 1   // a substitution
-          );
-        }
+        final int c = (s.charAt(i) == t.charAt(j)) ? 0 : 1;
+        x = Math.min(Math.min(
+          d[j + 1] + 1, // an insertion
+          e + 1),       // a deletion
+          d[j] + c      // a substitution
+        );
+        d[j] = e;
+        e = x;
       }
+      d[n] = x;
     }
 
-    return d[m][n];
+    return x;
   }
 
   /**
@@ -115,7 +59,7 @@ public final class Levenshtein
    * @param dict Dictionary.
    * @return Minimum Levenshtein distance.
    */
-  public int distanceWord(final String word, final Dictionary dict)
+  public static int distanceWord(final String word, final Dictionary dict)
   {
     // if the dictionary contains the word, there is no need to go any further
     if (dict.contains(word))
@@ -166,7 +110,7 @@ public final class Levenshtein
    * @param dict Dictionary.
    * @return Sum of the minimum Levenshtein distances.
    */
-  public int distanceSentence(final String sentence, final Dictionary dict)
+  public static int distanceSentence(final String sentence, final Dictionary dict)
   {
     int totaldist = 0;
 
@@ -176,20 +120,5 @@ public final class Levenshtein
     }
 
     return totaldist;
-  }
-
-  /* ------------------------------------------------------------------------ */
-
-  /** Singleton instance. */
-  private static final Levenshtein instance = new Levenshtein();
-
-  /**
-   * Returns the singleton instance.
-   *
-   * @return Singleton instance.
-   */
-  public static Levenshtein getInstance()
-  {
-    return instance;
   }
 }
