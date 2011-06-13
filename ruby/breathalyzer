@@ -23,4 +23,4 @@ line.upcase!
 
 # and output the sum of the minimum distances between the words in the
 # sentence and the words in the dictionary
-puts Levenshtein.instance.distance_sentence(line, dict)
+puts Levenshtein.distance_sentence(line, dict)

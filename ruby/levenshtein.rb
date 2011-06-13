@@ -1,97 +1,48 @@
-require 'singleton'
-
 ##
 # Utility class to calculate Levenshtein distances.
 #
 class Levenshtein
-  include Singleton
-
-  ##
-  # Default rows and columns for the distance matrix.
-  #
-  DEFAULT_SIZE = 16
-
-  ##
-  # Rows in the distance matrix.
-  #
-  attr_reader :rows
-
-  ##
-  # Columns in the distance matrix.
-  #
-  attr_reader :cols
-
-  ##
-  # Reusable distance matrix.
-  #
-  attr_reader :matrix
-
-  ##
-  # Constructs an instance with a distance matrix of the specified rows and
-  # columns.
-  #
-  def initialize(rows = DEFAULT_SIZE, cols = DEFAULT_SIZE)
-    @rows = 0
-    @cols = 0
-    @matrix = distance_matrix(rows, cols)
-  end
-
-  ##
-  # Returns a matrix with at least the specified rows and columns.
-  #
-  # It tries to reuse the existing matrix, to minimize allocations.
-  #
-  def distance_matrix(rows, cols)
-    if @rows < rows or @cols < cols
-      @rows = [@rows, rows].max
-      @cols = [@cols, cols].max
-      @matrix = Array.new(@rows) { Array.new(@cols, 0) }
-    end
-    @matrix
-  end
 
   ##
   # Calculates the Levenshtein distance between two words.
   #
-  def distance(s, t)
-    return 0 if s == t
+  def self.distance(s, t)
+    unpack_rule = ($KCODE =~ /^U/i) ? 'U*' : 'C*'
+    s = s.unpack(unpack_rule)
+    t = t.unpack(unpack_rule)
 
     m = s.length
     n = t.length
+
+    return m if n == 0
+    return n if m == 0
   
-    # d[i][j] will hold the levenshtein distance between the first i chars
-    # of s and the first j chars of t
-    d = distance_matrix(m + 1, n + 1)
-  
-    (0 .. m).each do |i|
-      d[i][0] = i # the distance of any first string to an empty second string
-    end
-    (0 .. n).each do |j|
-      d[0][j] = j # the distance of any second string to an empty first string
-    end
-  
-    (1 .. n).each do |j|
-      (1 .. m).each do |i|
-        if s[i - 1] == t[j - 1]
-          d[i][j] = d[i - 1][j - 1] # no operation required
-        else
-          d[i][j] = [
-                      d[i - 1][j    ] + 1, # a deletion
-                      d[i    ][j - 1] + 1, # an insertion
-                      d[i - 1][j - 1] + 1  # a substitution
-                    ].min
-        end
+    d = (0 .. n).to_a
+    x = -1
+
+    (0 ... m).each do |i|
+      e = i + 1
+      (0 ... n).each do |j|
+        c = (s[i] == t[j]) ? 0 : 1
+        x = [
+          d[j + 1] + 1, # an insertion
+          e + 1,        # a deletion
+          d[j] + c      # a substitution
+        ].min
+        d[j] = e
+        e = x
       end
+      d[n] = x
     end
-  
-    return d[m][n]
+
+    return x
   end
 
   ##
   # Calculates the minimum Levenshtein distance between a word and all the
   # words in a dictionary.
   #
-  def distance_word(word, dict)
+  def self.distance_word(word, dict)
     # if the dictionary contains the word, there is no need to go any further
     return 0 if dict.include?(word)
 
@@ -126,7 +77,7 @@ class Levenshtein
   # Calculates the sum of the minimum Levenshtein distances between the words
   # in a sentence and the words in a dictionary.
   #
-  def distance_sentence(sentence, dict)
+  def self.distance_sentence(sentence, dict)
     sentence.split(/\s+/).inject(0) do |totaldist, word|
       totaldist + distance_word(word, dict)
     end
